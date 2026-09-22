@@ -1,56 +1,93 @@
-document.addEventListener('DOMContentLoaded', () => {
-    
-    const todoInput = document.getElementById("todo-input");
-    const addTaskButton = document.getElementById("add-task-btn");
-    const todoList = document.getElementById("todo-list");
+document.addEventListener("DOMContentLoaded" , ()=>{
+    const products=[
+        {id:1, name:"Gucci Bag", price: 9000},
+        {id:2, name:"Ralph Lauren Shirt", price: 2000},
+        {id:3, name:"Prada Jacket", price: 4300},
+    ];
 
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    tasks.forEach((task) => renderTask(task));
+    let cart=JSON.parse(localStorage.getItem('cart')) || [];
 
-    addTaskButton.addEventListener("click", () => {
-      const taskText = todoInput.value.trim();
-      if (taskText === "") return;
+    const productList=document.getElementById("product-list");
+    const CartItems=document.getElementById("cart-items");
+    const emptyCartMessage =document.getElementById("empty-cart");
+    const cartTotalMessage =document.getElementById("cart-total");
+    const totalPriceDisplay =document.getElementById("total-price");
+    const checkOutBtn =document.getElementById("checkout-btn");;
 
-      const newTask = {
-        id: Date.now(),
-        text: taskText,
-        completed: false,
-      };
-      tasks.push(newTask);
-      saveTasks();
-      renderTask(newTask);
-      todoInput.value = "";
-      console.log(tasks);
+    products.forEach(product => {
+        const productDiv=document.createElement('div');
+        productDiv.classList.add('product');
+        productDiv.innerHTML=`
+        <span>${product.name} - $${product.price.toFixed(2)}</span>
+        <button data-id="${product.id}">Add to Cart</button>
+        `;
+        productList.appendChild(productDiv);
     });
 
-    function renderTask(task) {
-        const li=document.createElement("li");
-        li.setAttribute('data-id',task.id);
-        if(task.completed) li.classList.add("completed");
-        li.innerHTML=`
-        <span>${task.text}</span>
-        <button>delete</button>
-        `;
-        li.addEventListener('click', (e)=>{
-            if(e.target.tagName==="BUTTON") return;
-            task.completed=!task.completed;
-            li.classList.toggle('completed');
-            saveTasks();
-        });
+    productList.addEventListener("click", (e)=>{
+        if(e.target.tagName==="BUTTON"){
+            const productId=parseInt(e.target.getAttribute('data-id'));
+            const product=products.find(p=> p.id===productId);
+            addToCart(product);
+        }
 
-        li.querySelector('button').addEventListener('click', (e)=>{
-            e.stopPropagation() //prevent toggle from firing
-            tasks=tasks.filter(t => t.id !==task.id);
-            li.remove();
-            saveTasks();
-        })
+    });
+    CartItems.addEventListener("click", (e1) => {
+      if (e1.target.tagName === "BUTTON") {
+        const removeID = parseInt(e1.target.getAttribute("data-id"));
+        const cartProduct = cart.find((p) => p.id === removeID);
+        removeFromCart(cartProduct);
+      }
+    });
 
-        todoList.appendChild((li));
+    function addToCart(product){
+        cart.push(product);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        renderCart();
     }
 
-    function saveTasks() {
-      localStorage.setItem("tasks", JSON.stringify(tasks));
+    function renderCart(){
+        CartItems.innerText="";
+        let totalPrice=0;
+        if(cart.length>0){
+            emptyCartMessage.classList.add('hidden');
+            cartTotalMessage.classList.remove('hidden');
+            cart.forEach((item,index)=>{
+                totalPrice+=item.price;
+                const cartItem=document.createElement('div');
+                cartItem.classList.add("cart-item");
+                cartItem.innerHTML = `
+                <span>${item.name} - $${item.price.toFixed(2)}</span>
+                <button class="remove-btn" data-id="${item.id}">Remove</button>
+                `;
+                CartItems.appendChild(cartItem);
+                totalPriceDisplay.textContent=`${totalPrice.toFixed(2)}`;
+
+
+                
+                
+            });
+            
+        }
+        else{
+            emptyCartMessage.classList.remove("hidden");
+            totalPriceDisplay.textContent = `$0.00`;
+            
+        }
+        
     }
 
+    checkOutBtn.addEventListener('click',()=>{
+        cart.length=0;
+        alert("Checkout Successfully")
+        renderCart();
+    });
 
+    function removeFromCart(cartProduct) {
+      cart = cart.filter((p) => p.id !== cartProduct.id);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    renderCart();
 });
