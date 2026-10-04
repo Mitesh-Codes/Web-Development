@@ -1,5 +1,0 @@
-p{
-    color:aquamarine; /* this doesnt work as we define color in html file using class*/
-    font-size: 20px;
-    padding: 30px;
-}
