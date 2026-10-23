@@ -126,4 +126,10 @@ All endpoints use the `/api/v1` prefix. Routes marked **Yes** require an access 
 
 ## Testing
 
-The repository does not currently define an automated test suite; `npm test` is a placeholder. API routes have been manually exercised during development. Add and run automated tests before relying on them in continuous integration or release workflows.
+Run the automated checks with:
+
+```bash
+npm test
+```
+
+The suite uses Node.js's built-in test runner and starts the Express app on an available local port. It checks the health response, key request validation, and that protected routes reject unauthenticated requests. These checks do not require MongoDB or Cloudinary. They provide fast route and middleware coverage; database-backed workflows and media uploads still need integration testing against configured services.
