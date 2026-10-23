@@ -10,31 +10,60 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const getCloudinaryAssetFromUrl = (assetUrl) => {
+    try {
+        const pathname = new URL(assetUrl).pathname;
+        const uploadMarker = "/upload/";
+        const uploadIndex = pathname.indexOf(uploadMarker);
+        if (uploadIndex === -1) return null;
+
+        const resourceType = pathname.slice(0, uploadIndex).split("/").filter(Boolean).at(-1);
+        const pathParts = pathname.slice(uploadIndex + uploadMarker.length).split("/").filter(Boolean);
+        if (pathParts[0] && /^v\d+$/.test(pathParts[0])) pathParts.shift();
+        if (!resourceType || pathParts.length === 0) return null;
+
+        const filename = pathParts.pop();
+        pathParts.push(filename.replace(/\.[^.]+$/, ""));
+        return { publicId: pathParts.join("/"), resourceType };
+    } catch {
+        return null;
+    }
+};
+
 
 const uploadOnCloudinary = async (localFilePath) => {
+    if (!localFilePath) return null;
+
+    const removeLocalFile = () => {
+        try {
+            if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
+        } catch (error) {
+            console.error("Error removing temporary upload:", error);
+        }
+    };
+
     try {
-        if(!localFilePath) return null;
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
         });
         console.log("File uploaded to Cloudinary successfully. File src: " + response.url);
-        fs.unlinkSync(localFilePath);
+        removeLocalFile();
         return response;
     } catch (error) {
-        fs.unlinkSync(localFilePath);
+        removeLocalFile();
         return null;
     }
 }
 
-const deleteFromCloudinary = async (publicId) => {
+const deleteFromCloudinary = async (publicId, resourceType = "image") => {
     try {
         if(!publicId) return null;
-        const result = await cloudinary.uploader.destroy(publicId);
-        console.log("File deleted from Cloudinary successfully. File src: " + result.url);
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+        console.log("File deleted from Cloudinary successfully. Result: " + result.result);
     } catch (error) {
         console.error("Error deleting file from Cloudinary:", error);
         return null;
     }
 }
 
-export { uploadOnCloudinary, deleteFromCloudinary };
+export { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryAssetFromUrl };

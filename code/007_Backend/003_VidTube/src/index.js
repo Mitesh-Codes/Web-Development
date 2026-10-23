@@ -1,10 +1,13 @@
 import dotenv from "dotenv";
-import { app } from "./app.js";
-import connectDB from "./db/index.js";
 
 dotenv.config({
     path: "./.env",
 });
+
+const [{ app }, { default: connectDB }] = await Promise.all([
+    import("./app.js"),
+    import("./db/index.js"),
+]);
 
 const PORT = process.env.PORT || 8001;
 
